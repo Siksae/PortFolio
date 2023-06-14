@@ -4,14 +4,46 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    class PlayerMovement
+    {
+        int time;
+        int timer;
+
+    }
+    public static Player Instance;
+
     [Header("플레이어 기본 컴포넌트")]
     private Rigidbody2D m_rigid;
     private BoxCollider2D m_2DBox;
     private Animator m_Anim;
 
+    [Header("플레이어 공격")]
+    private bool m_doAttack;
+    private float m_doAttacktimer;
+    private float m_attackSpeed = 0.5f;
+
+    [Header("플레이어 점프")]
+
+    [Header("플레이어 벽점프")]
+
+    [Header("플레이어 벽잡기")]
+
+    [Header("플레이어 벽점프")]
+
     [SerializeField] private Vector3 m_moveDir;
     [SerializeField] private float m_playermovespeed = 5f;
-    
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(this);
+        }
+    }
     // Start is called before the first frame update
     void Start()
     {
@@ -24,11 +56,16 @@ public class Player : MonoBehaviour
     void Update()
     {
         moving();
+        Attack();
         checkAnim();
     }
     
     private void moving()
     {
+        if (m_doAttack == true)
+        {
+            return;
+        }
         m_moveDir.x = Input.GetAxisRaw("Horizontal");
         if (m_moveDir.x == 1f)
         {
@@ -42,14 +79,49 @@ public class Player : MonoBehaviour
         }
         
     }
-    private void checkAnim()
-    {
-        m_Anim.SetBool("move", m_moveDir.x != 0);
-        m_Anim.SetBool("attack", Input.GetKeyDown(KeyCode.Z));
-    }
+
 
     private void Attack()
     {
-        
+        if (m_moveDir.x != 0f)
+        {
+            return;
+        }
+        if (Input.GetKey(KeyCode.Z))
+        {
+            if (m_doAttack == true)
+            {
+                return;
+            }
+            m_doAttack = true;
+        }
+        else if (Input.GetKeyUp(KeyCode.Z) || m_doAttack == true)
+        {
+            m_doAttacktimer += 0.1f;
+
+            if (m_doAttacktimer > 2f)
+            {
+                m_doAttack = false;
+                m_doAttacktimer = 0f;
+            }              
+        }
+    }
+
+
+    private void jump()
+    {
+
+    }
+
+    private void gripwall()
+    {
+
+    }
+
+    private void checkAnim()
+    {
+        m_Anim.SetBool("move", m_moveDir.x != 0);
+        m_Anim.SetBool("doattack", m_doAttack);
+        m_Anim.SetFloat("playerAttackSpeed", m_attackSpeed);
     }
 }
