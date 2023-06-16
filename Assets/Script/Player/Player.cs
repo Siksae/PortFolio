@@ -53,8 +53,15 @@ public class Player : MonoBehaviour
     [Header("플레이어 벽잡기")] //플레이어 벽잡기 변수 : 벽 인식, 땅 인식, 벽의 모서리 인식, ANIM(JUMPUP, JUMPDOWN), 벽을 잡고있을때는 다른 동작 Lock
 
     [Header("플레이어 회피")] //플레이어 회피 변수 : 무적 시간, 무적 여/부, 무적 타이머, ANIM 추가
+    private bool m_dodge;
+    private bool m_invin;
+    private float m_invinTime;
+    private float m_invinTimer;
+    private float m_shiftTime; //대쉬, 회피 판별 변수
 
-    [SerializeField] private Vector3 m_moveDir; 
+    [SerializeField] private Vector3 m_moveDir;
+    private Vector3 m_checkDir;
+    private bool m_isRight;
 
     private void Awake()
     {
@@ -80,18 +87,27 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        Dircheck();
         moving();
         Attack();
         dashing();
+        dodge();
         checkAnim();
     }
-    
+    private void Dircheck() //플레이어 방향을 체크합니다.
+    {
+        m_checkDir = transform.localScale;
+        if (Mathf.Sign(m_checkDir.x) == 1)
+        {
+            m_isRight = true;
+        }
+        else
+        {
+            m_isRight = false;
+        }
+    }
     private void moving()
     {
-        if (m_doAttack == true)
-        {
-            return;
-        }
         m_moveDir.x = Input.GetAxisRaw("Horizontal");
         if (m_moveDir.x != 0)
         {
@@ -104,18 +120,16 @@ public class Player : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.Z))
         {
-            
-            if (!m_Animation.IsPlaying("Attack1"))
+            if (m_moving || m_dashing || m_dodge)
             {
-                m_doAttack = true;
+                return;
             }
             else
             {
-                return; 
+                m_doAttack = true;
             }
-            
         }
-        else if (Input.GetKeyUp(KeyCode.Z) && m_Animation.IsPlaying("Attack1"))
+        else if (Input.GetKeyUp(KeyCode.Z))
         {
             m_doAttack = false;
         }
@@ -147,13 +161,44 @@ public class Player : MonoBehaviour
 
     }
 
+    private void dodge()
+    {
+        if (Input.GetKeyDown(KeyCode.LeftControl))
+        {
+            if (m_dodge == true)
+            {
+                return;
+            }
+            else
+            {
+                m_dodge = true;
+            }
+            m_Animator.SetBool("dododge", m_dodge);
+        }
+        if (m_isRight == true && m_dodge == true)
+        {
+            transform.position += Vector3.right * 3  * Time.deltaTime ;
+        }
+        else if(m_isRight == false && m_dodge == true)
+        {
+            transform.position += Vector3.left * 3 * Time.deltaTime;
+        }
+
+    }
+    private void dodgeend()
+    {
+        m_dodge = false;
+        m_Animator.SetBool("dododge", false);
+    }
     private void checkAnim()
     {
         m_Animator.SetBool("move", m_moveDir.x != 0);
         m_Animator.SetBool("doattack", m_doAttack);
         m_Animator.SetBool("dodash", m_dashing);
+        //m_Animator.SetBool("dododge", m_dodge);
         m_Animator.SetFloat("playerMoveSpeed", m_playermovespeed);
         m_Animator.SetFloat("playerAttackSpeed", m_attackSpeed);
+        
 
     }
 }
