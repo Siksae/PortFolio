@@ -18,10 +18,11 @@ public class Player : MonoBehaviour
     private Animator m_Animator;
     private Animation m_Animation;
     private Transform m_trs;
-
+    
     [Header("플레이어 공격")] //플레이어 공격의 변수  
-    private bool m_doAttack;
-    private float m_doAttacktimer;
+    private bool m_Attack; //공격키 입력변수
+    private bool m_doAttack; //공격을 하고 있는지
+    private float m_doAttacktimer = 1f;
     private float m_attackSpeed = 1f;
 
     [Header("플레이어 이동")] //플레이어 이동 변수
@@ -44,9 +45,15 @@ public class Player : MonoBehaviour
             _dashing = value;
         }
     }
-    [SerializeField] private float m_playermovespeed = 5f;
-    private float m_playermovespeedlimit = 10f;
+    [SerializeField] private float m_playermovespeed = 5f;  //초기 대쉬 속도
+    private float m_playermovespeedlimit = 10f;             //대시 속도 리밋
     [Header("플레이어 점프")] //플레이어 점프의 변수 : 벽 인식, 땅 인식, 점프 스피드 (gravity)
+    private bool m_jump; //jump
+    private bool m_dojump;
+    private float m_jumppower = 7f;
+    private float m_gravity;
+    [SerializeField] protected bool m_checkGround;
+    [SerializeField] private bool m_checkWall;
 
     [Header("플레이어 벽점프")] //플레이어 벽점프의 변수 : 벽 인식, 땅 인식, 벽이면 반대로 점프, ANIM(JUMPUP) 
 
@@ -87,12 +94,19 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        checkCamera();
         Dircheck();
         moving();
         Attack();
         dashing();
         dodge();
+        jump();
         checkAnim();
+        aminNameCheck();
+    }
+    private void checkCamera()
+    {
+        Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, -10f);
     }
     private void Dircheck() //플레이어 방향을 체크합니다.
     {
@@ -106,8 +120,25 @@ public class Player : MonoBehaviour
             m_isRight = false;
         }
     }
+    public void checkGround()
+    {
+        RaycastHit2D Groundray2D = Physics2D.BoxCast(m_2DBox.bounds.center, m_2DBox.bounds.size, 0f, Vector3.down, 0.5f, LayerMask.GetMask("Ground"));
+        if (Groundray2D == true && m_dojump == false)
+        {
+            m_checkGround = true;
+            m_dojump = false;
+        }
+        else if (Groundray2D == false || m_dojump == true)
+        {
+            m_checkGround = false;
+        }
+    }
     private void moving()
     {
+        if(m_doAttack == true)
+        {
+            return;
+        }
         m_moveDir.x = Input.GetAxisRaw("Horizontal");
         if (m_moveDir.x != 0)
         {
@@ -120,21 +151,22 @@ public class Player : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.Z))
         {
-            if (m_moving || m_dashing || m_dodge)
-            {
-                return;
-            }
-            else
-            {
-                m_doAttack = true;
-            }
+            m_Attack = true;
         }
-        else if (Input.GetKeyUp(KeyCode.Z))
+        else if (!Input.GetKey(KeyCode.Z))
         {
-            m_doAttack = false;
+            if (m_Attack == true) //공격할 때 공격키를 누를 시 끊김방지
+            {
+                m_doAttacktimer -= 0.1f;
+                if (m_doAttacktimer < 0f)
+                {
+                    m_doAttacktimer = 1f;
+                    m_Attack = false;
+                }
+            }
+           
         }
     }
-
     private void dashing() // 플레이어 대쉬 함수
     {
         if (Input.GetKey(KeyCode.LeftShift))
@@ -153,9 +185,62 @@ public class Player : MonoBehaviour
     }
     private void jump()
     {
-
+        if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            if (m_checkGround == true)
+            {
+                m_jump = true;
+                m_dojump = true;
+                m_rigid.velocity = Vector2.up * m_jumppower; 
+            }
+            else
+            {
+                return;
+            }
+        }
+        else
+        {
+            m_jump = false;
+        }
     }
-
+    public void CollCheck(HitBox.e_stateType _state, HitBox.e_hitType _hit, Collider2D _coll) //콜라이더 우선
+    {
+        switch (_state)
+        {
+            case HitBox.e_stateType.Enter :
+                switch (_hit)
+                {
+                    case HitBox.e_hitType.Ground:
+                        m_checkGround = true;
+                        m_dojump = false;
+                        break;
+                    case HitBox.e_hitType.Wall:
+                        break;
+                    case HitBox.e_hitType.Object:
+                        break;
+                    case HitBox.e_hitType.Attack:
+                        break;
+                }
+                break;
+            case HitBox.e_stateType.Stay:
+                break;
+            case HitBox.e_stateType.Exit:
+                switch (_hit)
+                {
+                    case HitBox.e_hitType.Ground:
+                        m_checkGround = false;
+                        m_dojump = true;
+                        break;
+                    case HitBox.e_hitType.Wall:
+                        break;
+                    case HitBox.e_hitType.Object:
+                        break;
+                    case HitBox.e_hitType.Attack:
+                        break;
+                }
+                break;
+        }
+    }
     private void gripwall()
     {
 
@@ -173,7 +258,6 @@ public class Player : MonoBehaviour
             {
                 m_dodge = true;
             }
-            m_Animator.SetBool("dododge", m_dodge);
         }
         if (m_isRight == true && m_dodge == true)
         {
@@ -185,20 +269,25 @@ public class Player : MonoBehaviour
         }
 
     }
-    private void dodgeend()
-    {
-        m_dodge = false;
-        m_Animator.SetBool("dododge", false);
-    }
     private void checkAnim()
     {
         m_Animator.SetBool("move", m_moveDir.x != 0);
         m_Animator.SetBool("doattack", m_doAttack);
         m_Animator.SetBool("dodash", m_dashing);
-        //m_Animator.SetBool("dododge", m_dodge);
+        m_Animator.SetBool("Attack", m_Attack);
+        m_Animator.SetBool("dododge", m_dodge);
+        m_Animator.SetBool("Jump", m_jump);
+        m_Animator.SetBool("dojump", m_dojump);
+        m_Animator.SetFloat("gravity", m_rigid.velocity.y);
+        //m_Animator.SetInteger("test", gravityCheck());
         m_Animator.SetFloat("playerMoveSpeed", m_playermovespeed);
         m_Animator.SetFloat("playerAttackSpeed", m_attackSpeed);
-        
 
+
+    }
+    private void aminNameCheck()
+    {
+            m_doAttack = m_Animator.GetCurrentAnimatorClipInfo(0)[0].clip.name.Contains("Attack") == true ? true : false;
+            m_dodge = m_Animator.GetCurrentAnimatorClipInfo(0)[0].clip.name.Contains("Dodge") == true? true : false;
     }
 }
