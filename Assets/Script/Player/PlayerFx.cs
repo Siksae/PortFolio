@@ -2,17 +2,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CameraManager : MonoBehaviour
+public class PlayerFx : MonoBehaviour
 {
+
+    private PlayerPrefs pref;
     // Start is called before the first frame update
     void Start()
     {
-        
+        pref = GetComponent<PlayerPrefs>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        Camera.main.transform.position = new Vector3(Player.Instance.transform.position.x, Player.Instance.transform.position.y,-10);
+        
+    }
+
+    private void SetPosition()
+    {
     }
 }

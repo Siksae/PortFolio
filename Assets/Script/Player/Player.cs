@@ -17,7 +17,7 @@ public class Player : MonoBehaviour
     private BoxCollider2D m_2DBox;
     private Animator m_Animator;
     private Animation m_Animation;
-    private Transform m_trs;
+    [SerializeField] private Transform m_trsobj;
     
     [Header("플레이어 공격")] //플레이어 공격의 변수  
     private bool m_Attack; //공격키 입력변수
@@ -88,7 +88,7 @@ public class Player : MonoBehaviour
         m_2DBox = GetComponent<BoxCollider2D>();
         m_Animator = GetComponent<Animator>();
         m_Animation = GetComponent<Animation>();
-        m_trs = GetComponent<Transform>();
+        m_trsobj = GetComponent<Transform>();
     }
 
     // Update is called once per frame
@@ -120,19 +120,6 @@ public class Player : MonoBehaviour
             m_isRight = false;
         }
     }
-    public void checkGround()
-    {
-        RaycastHit2D Groundray2D = Physics2D.BoxCast(m_2DBox.bounds.center, m_2DBox.bounds.size, 0f, Vector3.down, 0.5f, LayerMask.GetMask("Ground"));
-        if (Groundray2D == true && m_dojump == false)
-        {
-            m_checkGround = true;
-            m_dojump = false;
-        }
-        else if (Groundray2D == false || m_dojump == true)
-        {
-            m_checkGround = false;
-        }
-    }
     private void moving()
     {
         if(m_doAttack == true)
@@ -140,11 +127,16 @@ public class Player : MonoBehaviour
             return;
         }
         m_moveDir.x = Input.GetAxisRaw("Horizontal");
-        if (m_moveDir.x != 0)
+        if (m_moveDir.x != 0 && m_checkWall == true)
         {
-            transform.position +=  m_moveDir * m_playermovespeed * Time.deltaTime;
             transform.localScale = m_moveDir.x == 1f ? new Vector3(3f, 3f, 3f) : new Vector3(-3f, 3f, 3f);
         }
+        else if (m_moveDir.x != 0)
+        {
+            transform.position += m_moveDir * m_playermovespeed * Time.deltaTime;
+            transform.localScale = m_moveDir.x == 1f ? new Vector3(3f, 3f, 3f) : new Vector3(-3f, 3f, 3f);
+        }
+        
     }
 
     private void Attack() // 플레이어 공격 함수
@@ -174,6 +166,7 @@ public class Player : MonoBehaviour
             _dashing = true;
             if (m_playermovespeedlimit > m_playermovespeed)
             {
+                //GameObject obj = Instantiate()
                 m_playermovespeed += m_playermovespeed * Time.deltaTime; // 대시 스피드 점점 빨라짐
             }
         }
@@ -187,20 +180,23 @@ public class Player : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.UpArrow))
         {
+            m_gravity = m_rigid.velocity.y;
+
             if (m_checkGround == true)
             {
                 m_jump = true;
                 m_dojump = true;
-                m_rigid.velocity = Vector2.up * m_jumppower; 
+                m_rigid.velocity = Vector2.up * m_jumppower;
+                
             }
             else
             {
                 return;
             }
         }
-        else
+        else if(m_gravity < 0)
         {
-            m_jump = false;
+            
         }
     }
     public void CollCheck(HitBox.e_stateType _state, HitBox.e_hitType _hit, Collider2D _coll) //콜라이더 우선
@@ -215,6 +211,7 @@ public class Player : MonoBehaviour
                         m_dojump = false;
                         break;
                     case HitBox.e_hitType.Wall:
+                        m_checkWall = true;
                         break;
                     case HitBox.e_hitType.Object:
                         break;
@@ -232,6 +229,7 @@ public class Player : MonoBehaviour
                         m_dojump = true;
                         break;
                     case HitBox.e_hitType.Wall:
+                        m_checkWall = false;
                         break;
                     case HitBox.e_hitType.Object:
                         break;
@@ -267,7 +265,11 @@ public class Player : MonoBehaviour
         {
             transform.position += Vector3.left * 3 * Time.deltaTime;
         }
+    }
 
+    private void Skill()
+    {
+        
     }
     private void checkAnim()
     {
@@ -279,7 +281,6 @@ public class Player : MonoBehaviour
         m_Animator.SetBool("Jump", m_jump);
         m_Animator.SetBool("dojump", m_dojump);
         m_Animator.SetFloat("gravity", m_rigid.velocity.y);
-        //m_Animator.SetInteger("test", gravityCheck());
         m_Animator.SetFloat("playerMoveSpeed", m_playermovespeed);
         m_Animator.SetFloat("playerAttackSpeed", m_attackSpeed);
 
