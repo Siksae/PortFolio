@@ -4,14 +4,6 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    class PlayerMovement
-    {
-        int time;
-        int timer;
-
-    }
-    public static Player Instance;
-
     [Header("플레이어 기본 컴포넌트")] //플레이어의 기본 컴포넌트의 정의
     private Rigidbody2D m_rigid;
     private BoxCollider2D m_2DBox;
@@ -50,6 +42,8 @@ public class Player : MonoBehaviour
     [Header("플레이어 점프")] //플레이어 점프의 변수 : 벽 인식, 땅 인식, 점프 스피드 (gravity)
     private bool m_jump; //jump
     private bool m_dojump;
+    [SerializeField] private bool m_dowallgrap;
+    private bool m_wallgrap;
     private float m_jumppower = 7f;
     private float m_gravity;
     [SerializeField] protected bool m_checkGround;
@@ -70,18 +64,6 @@ public class Player : MonoBehaviour
     private Vector3 m_checkDir;
     private bool m_isRight;
 
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(this);
-        }
-    }
-    // Start is called before the first frame update
     void Start()
     {
         m_rigid = GetComponent<Rigidbody2D>();
@@ -90,8 +72,6 @@ public class Player : MonoBehaviour
         m_Animation = GetComponent<Animation>();
         m_trsobj = GetComponent<Transform>();
     }
-
-    // Update is called once per frame
     void Update()
     {
         checkCamera();
@@ -101,6 +81,7 @@ public class Player : MonoBehaviour
         dashing();
         dodge();
         jump();
+        gripwall();
         checkAnim();
         aminNameCheck();
     }
@@ -122,7 +103,7 @@ public class Player : MonoBehaviour
     }
     private void moving()
     {
-        if(m_doAttack == true)
+        if(m_doAttack == true || m_wallgrap == true)
         {
             return;
         }
@@ -178,27 +159,24 @@ public class Player : MonoBehaviour
     }
     private void jump()
     {
+        m_gravity = m_rigid.velocity.y;
         if (Input.GetKeyDown(KeyCode.UpArrow))
         {
-            m_gravity = m_rigid.velocity.y;
-
-            if (m_checkGround == true)
+            if (m_checkGround == true || m_wallgrap == true)
             {
-                m_jump = true;
-                m_dojump = true;
+                RigidbodyType2D BodyType = RigidbodyType2D.Dynamic;
+                m_rigid.bodyType = BodyType;
                 m_rigid.velocity = Vector2.up * m_jumppower;
-                
-            }
-            else
-            {
-                return;
+                m_jump = true;
+                m_dojump = true;                 
             }
         }
-        else if(m_gravity < 0)
+        else
         {
-            
+            m_jump = false;
         }
     }
+
     public void CollCheck(HitBox.e_stateType _state, HitBox.e_hitType _hit, Collider2D _coll) //콜라이더 우선
     {
         switch (_state)
@@ -209,6 +187,8 @@ public class Player : MonoBehaviour
                     case HitBox.e_hitType.Ground:
                         m_checkGround = true;
                         m_dojump = false;
+                        GameObject jumpend = Instantiate(GameManager.Instance.m_playerfx[2], transform.position, Quaternion.identity, m_trsobj);
+                        Destroy(jumpend,1.0f);
                         break;
                     case HitBox.e_hitType.Wall:
                         m_checkWall = true;
@@ -216,6 +196,9 @@ public class Player : MonoBehaviour
                     case HitBox.e_hitType.Object:
                         break;
                     case HitBox.e_hitType.Attack:
+                        break;
+                    case HitBox.e_hitType.WallGrap:
+                        m_dowallgrap = false;
                         break;
                 }
                 break;
@@ -227,6 +210,7 @@ public class Player : MonoBehaviour
                     case HitBox.e_hitType.Ground:
                         m_checkGround = false;
                         m_dojump = true;
+
                         break;
                     case HitBox.e_hitType.Wall:
                         m_checkWall = false;
@@ -235,13 +219,20 @@ public class Player : MonoBehaviour
                         break;
                     case HitBox.e_hitType.Attack:
                         break;
+                    case HitBox.e_hitType.WallGrap:
+                        m_dowallgrap = true;
+                        break;
                 }
                 break;
         }
     }
     private void gripwall()
     {
-
+        if (m_wallgrap == true && m_checkWall == true && m_dowallgrap == true)
+        {
+            RigidbodyType2D BodyType = RigidbodyType2D.Static;
+            m_rigid.bodyType = BodyType;
+        }
     }
 
     private void dodge()
@@ -280,7 +271,10 @@ public class Player : MonoBehaviour
         m_Animator.SetBool("dododge", m_dodge);
         m_Animator.SetBool("Jump", m_jump);
         m_Animator.SetBool("dojump", m_dojump);
-        m_Animator.SetFloat("gravity", m_rigid.velocity.y);
+        m_Animator.SetBool("wallgrap", m_wallgrap);
+        m_Animator.SetBool("doGrapWall", m_dowallgrap);
+        m_Animator.SetBool("WallCheck", m_checkWall);
+        m_Animator.SetFloat("gravity", m_gravity);
         m_Animator.SetFloat("playerMoveSpeed", m_playermovespeed);
         m_Animator.SetFloat("playerAttackSpeed", m_attackSpeed);
 
@@ -290,5 +284,6 @@ public class Player : MonoBehaviour
     {
             m_doAttack = m_Animator.GetCurrentAnimatorClipInfo(0)[0].clip.name.Contains("Attack") == true ? true : false;
             m_dodge = m_Animator.GetCurrentAnimatorClipInfo(0)[0].clip.name.Contains("Dodge") == true? true : false;
+            m_wallgrap = m_Animator.GetCurrentAnimatorClipInfo(0)[0].clip.name.Contains("Grap") == true ? true : false;
     }
 }

@@ -8,7 +8,7 @@ public class HitBox : MonoBehaviour
     [SerializeField] private e_hitType e_HitType; //히트 타입을 입력
     public enum e_hitType
     {
-        Ground, Wall, Object, Attack ,
+        Ground, Wall, Object, Attack, WallGrap,
     }
     public enum e_stateType
     {
