@@ -46,7 +46,7 @@ public class Player : MonoBehaviour
     private bool m_wallgrap;
     private float m_jumppower = 7f;
     private float m_gravity;
-    [SerializeField] protected bool m_checkGround;
+    [SerializeField] private bool m_checkGround = true;
     [SerializeField] private bool m_checkWall;
 
     [Header("플레이어 벽점프")] //플레이어 벽점프의 변수 : 벽 인식, 땅 인식, 벽이면 반대로 점프, ANIM(JUMPUP) 
@@ -60,6 +60,11 @@ public class Player : MonoBehaviour
     private float m_invinTimer;
     private float m_shiftTime; //대쉬, 회피 판별 변수
 
+    [Header("플레이어 상태")]
+    private float m_PlayerHP;
+    private float m_PlayerMP;
+    private float m_PlayerSP;
+    
     [SerializeField] private Vector3 m_moveDir;
     private Vector3 m_checkDir;
     private bool m_isRight;
@@ -77,11 +82,11 @@ public class Player : MonoBehaviour
         checkCamera();
         Dircheck();
         moving();
-        Attack();
         dashing();
         dodge();
         jump();
         gripwall();
+        Attack();
         checkAnim();
         aminNameCheck();
     }
@@ -110,6 +115,8 @@ public class Player : MonoBehaviour
         m_moveDir.x = Input.GetAxisRaw("Horizontal");
         if (m_moveDir.x != 0 && m_checkWall == true)
         {
+            transform.position +=  Vector3.zero;
+            m_rigid.velocity = m_rigid.velocity;
             transform.localScale = m_moveDir.x == 1f ? new Vector3(3f, 3f, 3f) : new Vector3(-3f, 3f, 3f);
         }
         else if (m_moveDir.x != 0)
@@ -176,7 +183,18 @@ public class Player : MonoBehaviour
             m_jump = false;
         }
     }
+    private void Invin()
+    {
+        if (m_dodge == true)
+        {
+            m_invin = true;
+        }
+        else
+        {
+            m_invin = false;
+        }
 
+    }
     public void CollCheck(HitBox.e_stateType _state, HitBox.e_hitType _hit, Collider2D _coll) //콜라이더 우선
     {
         switch (_state)
@@ -187,8 +205,6 @@ public class Player : MonoBehaviour
                     case HitBox.e_hitType.Ground:
                         m_checkGround = true;
                         m_dojump = false;
-                        GameObject jumpend = Instantiate(GameManager.Instance.m_playerfx[2], transform.position, Quaternion.identity, m_trsobj);
-                        Destroy(jumpend,1.0f);
                         break;
                     case HitBox.e_hitType.Wall:
                         m_checkWall = true;
@@ -220,7 +236,7 @@ public class Player : MonoBehaviour
                     case HitBox.e_hitType.Attack:
                         break;
                     case HitBox.e_hitType.WallGrap:
-                        m_dowallgrap = true;
+                            m_dowallgrap = true;
                         break;
                 }
                 break;
@@ -256,12 +272,9 @@ public class Player : MonoBehaviour
         {
             transform.position += Vector3.left * 3 * Time.deltaTime;
         }
+        Invin();
     }
 
-    private void Skill()
-    {
-        
-    }
     private void checkAnim()
     {
         m_Animator.SetBool("move", m_moveDir.x != 0);
@@ -274,11 +287,10 @@ public class Player : MonoBehaviour
         m_Animator.SetBool("wallgrap", m_wallgrap);
         m_Animator.SetBool("doGrapWall", m_dowallgrap);
         m_Animator.SetBool("WallCheck", m_checkWall);
+        m_Animator.SetBool("Ground", m_checkGround);
         m_Animator.SetFloat("gravity", m_gravity);
         m_Animator.SetFloat("playerMoveSpeed", m_playermovespeed);
         m_Animator.SetFloat("playerAttackSpeed", m_attackSpeed);
-
-
     }
     private void aminNameCheck()
     {
