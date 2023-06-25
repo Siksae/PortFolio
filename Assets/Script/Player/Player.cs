@@ -6,9 +6,10 @@ public class Player : MonoBehaviour
 {
     [Header("플레이어 기본 컴포넌트")] //플레이어의 기본 컴포넌트의 정의
     private Rigidbody2D m_rigid;
-    private BoxCollider2D m_2DBox;
+    private BoxCollider2D m_playerCollBox2D;
     private Animator m_Animator;
     private Animation m_Animation;
+    private Collider2D[] m_objplayercheckColl;
     [SerializeField] private Transform m_trsobj;
     
     [Header("플레이어 공격")] //플레이어 공격의 변수  
@@ -72,7 +73,8 @@ public class Player : MonoBehaviour
     void Start()
     {
         m_rigid = GetComponent<Rigidbody2D>();
-        m_2DBox = GetComponent<BoxCollider2D>();
+        m_playerCollBox2D = GetComponent<BoxCollider2D>();
+        m_objplayercheckColl = GetComponentsInChildren<Collider2D>();
         m_Animator = GetComponent<Animator>();
         m_Animation = GetComponent<Animation>();
         m_trsobj = GetComponent<Transform>();
@@ -89,8 +91,9 @@ public class Player : MonoBehaviour
         Attack();
         checkAnim();
         aminNameCheck();
+
     }
-    private void checkCamera()
+    private void checkCamera() //Camera가 Player를 따라다닙니다.
     {
         Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, -10f);
     }
@@ -106,7 +109,7 @@ public class Player : MonoBehaviour
             m_isRight = false;
         }
     }
-    private void moving()
+    private void moving() //플레이어 움직임
     {
         if(m_doAttack == true || m_wallgrap == true)
         {
@@ -169,13 +172,13 @@ public class Player : MonoBehaviour
         m_gravity = m_rigid.velocity.y;
         if (Input.GetKeyDown(KeyCode.UpArrow))
         {
-            if (m_checkGround == true || m_wallgrap == true)
+            if (m_checkGround == true || (m_checkGround == false && m_wallgrap == true))
             {
-                RigidbodyType2D BodyType = RigidbodyType2D.Dynamic;
-                m_rigid.bodyType = BodyType;
+                m_rigid.bodyType = RigidbodyType2D.Dynamic;
                 m_rigid.velocity = Vector2.up * m_jumppower;
                 m_jump = true;
-                m_dojump = true;                 
+                m_dojump = true;
+                m_wallgrap = false;
             }
         }
         else
@@ -205,16 +208,17 @@ public class Player : MonoBehaviour
                     case HitBox.e_hitType.Ground:
                         m_checkGround = true;
                         m_dojump = false;
+                        collOnOff(m_objplayercheckColl, HitBox.e_hitType.WallGrap, false);
                         break;
                     case HitBox.e_hitType.Wall:
                         m_checkWall = true;
                         break;
-                    case HitBox.e_hitType.Object:
+                    case HitBox.e_hitType.Hit:
                         break;
                     case HitBox.e_hitType.Attack:
                         break;
                     case HitBox.e_hitType.WallGrap:
-                        m_dowallgrap = false;
+                        m_dowallgrap = true;
                         break;
                 }
                 break;
@@ -226,28 +230,38 @@ public class Player : MonoBehaviour
                     case HitBox.e_hitType.Ground:
                         m_checkGround = false;
                         m_dojump = true;
-
+                        collOnOff(m_objplayercheckColl, HitBox.e_hitType.WallGrap, true);
                         break;
                     case HitBox.e_hitType.Wall:
                         m_checkWall = false;
                         break;
-                    case HitBox.e_hitType.Object:
+                    case HitBox.e_hitType.Hit:
                         break;
                     case HitBox.e_hitType.Attack:
                         break;
                     case HitBox.e_hitType.WallGrap:
-                            m_dowallgrap = true;
+                            m_dowallgrap = false;
                         break;
                 }
                 break;
         }
     }
+
+    private void collOnOff(Collider2D[] collider2Ds, HitBox.e_hitType _Name, bool _bool)
+    {
+        for (int iNum = collider2Ds.Length - 1; iNum > 0; iNum--)
+        {
+            if (collider2Ds[iNum].name == _Name.ToString())
+            {
+                collider2Ds[iNum].enabled = _bool;
+            }
+        }
+    }
     private void gripwall()
     {
-        if (m_wallgrap == true && m_checkWall == true && m_dowallgrap == true)
+        if (m_wallgrap == true && m_dowallgrap == true)
         {
-            RigidbodyType2D BodyType = RigidbodyType2D.Static;
-            m_rigid.bodyType = BodyType;
+            m_rigid.bodyType = RigidbodyType2D.Static;
         }
     }
 
