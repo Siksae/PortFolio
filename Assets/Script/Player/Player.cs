@@ -11,7 +11,10 @@ public class Player : MonoBehaviour
     private Animation m_Animation;
     private Collider2D[] m_objplayercheckColl;
     [SerializeField] private Transform m_trsobj;
-    
+
+    [Header("스크립트")]
+    [SerializeField] private Playerfx Playerfx;
+
     [Header("플레이어 공격")] //플레이어 공격의 변수  
     private bool m_Attack; //공격키 입력변수
     private bool m_doAttack; //공격을 하고 있는지
@@ -69,7 +72,6 @@ public class Player : MonoBehaviour
     [SerializeField] private Vector3 m_moveDir;
     private Vector3 m_checkDir;
     private bool m_isRight;
-
     void Start()
     {
         m_rigid = GetComponent<Rigidbody2D>();
@@ -78,6 +80,7 @@ public class Player : MonoBehaviour
         m_Animator = GetComponent<Animator>();
         m_Animation = GetComponent<Animation>();
         m_trsobj = GetComponent<Transform>();
+        
     }
     void Update()
     {
@@ -120,12 +123,12 @@ public class Player : MonoBehaviour
         {
             transform.position +=  Vector3.zero;
             m_rigid.velocity = m_rigid.velocity;
-            transform.localScale = m_moveDir.x == 1f ? new Vector3(3f, 3f, 3f) : new Vector3(-3f, 3f, 3f);
+            transform.localScale = m_moveDir.x == 1f ? new Vector3(2, 2f, 2f) : new Vector3(-2f, 2f, 2f);
         }
         else if (m_moveDir.x != 0)
         {
             transform.position += m_moveDir * m_playermovespeed * Time.deltaTime;
-            transform.localScale = m_moveDir.x == 1f ? new Vector3(3f, 3f, 3f) : new Vector3(-3f, 3f, 3f);
+            transform.localScale = m_moveDir.x == 1f ? new Vector3(2, 2f, 2f) : new Vector3(-2f, 2f, 2f);
         }
         
     }
@@ -152,9 +155,12 @@ public class Player : MonoBehaviour
     }
     private void dashing() // 플레이어 대쉬 함수
     {
-        if (Input.GetKey(KeyCode.LeftShift))
+        if (Input.GetKey(KeyCode.LeftShift) && m_dojump == false)
         {
+
+            GameObject obj = Instantiate(Playerfx.gameObject, transform.position, Quaternion.identity, m_trsobj).GetComponent<GameObject>();
             _dashing = true;
+            //대쉬 이펙트를 불러내고 싶은데 게임 매니저 playerfx에 있는 Dashing을 가져와야함
             if (m_playermovespeedlimit > m_playermovespeed)
             {
                 //GameObject obj = Instantiate()
@@ -170,10 +176,12 @@ public class Player : MonoBehaviour
     private void jump()
     {
         m_gravity = m_rigid.velocity.y;
+        ;
         if (Input.GetKeyDown(KeyCode.UpArrow))
         {
             if (m_checkGround == true || (m_checkGround == false && m_wallgrap == true))
             {
+                m_playermovespeed = 5f;
                 m_rigid.bodyType = RigidbodyType2D.Dynamic;
                 m_rigid.velocity = Vector2.up * m_jumppower;
                 m_jump = true;
