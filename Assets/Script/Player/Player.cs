@@ -11,6 +11,7 @@ public class Player : MonoBehaviour
     private Animation m_Animation;
     private Collider2D[] m_objplayercheckColl;
     [SerializeField] private Transform m_trsobj;
+    private GameManager gameManager;
 
     [Header("스크립트")]
     [SerializeField] private Playerfx Playerfx;
@@ -41,8 +42,11 @@ public class Player : MonoBehaviour
             _dashing = value;
         }
     }
-    [SerializeField] private float m_playermovespeed = 5f;  //초기 대쉬 속도
-    private float m_playermovespeedlimit = 10f;             //대시 속도 리밋
+    
+    [SerializeField] private float m_playermovespeedBasic = 5f;  //초기 대쉬 속도
+    private float m_playerMoveSpeed;
+    private float m_playermovespeedlimit = 10f; //대시 속도 리밋
+    private float m_playerMoveSpeedLowLimit = 2f; //대시 속도 리밋
     [Header("플레이어 점프")] //플레이어 점프의 변수 : 벽 인식, 땅 인식, 점프 스피드 (gravity)
     private bool m_jump; //jump
     private bool m_dojump;
@@ -74,13 +78,16 @@ public class Player : MonoBehaviour
     private bool m_isRight;
     void Start()
     {
+        m_playerMoveSpeed = m_playermovespeedBasic;
         m_rigid = GetComponent<Rigidbody2D>();
         m_playerCollBox2D = GetComponent<BoxCollider2D>();
         m_objplayercheckColl = GetComponentsInChildren<Collider2D>();
         m_Animator = GetComponent<Animator>();
         m_Animation = GetComponent<Animation>();
         m_trsobj = GetComponent<Transform>();
-        
+        gameManager = GameManager.Instance;
+
+
     }
     void Update()
     {
@@ -127,7 +134,7 @@ public class Player : MonoBehaviour
         }
         else if (m_moveDir.x != 0)
         {
-            transform.position += m_moveDir * m_playermovespeed * Time.deltaTime;
+            transform.position += m_moveDir * m_playerMoveSpeed * Time.deltaTime;
             transform.localScale = m_moveDir.x == 1f ? new Vector3(2, 2f, 2f) : new Vector3(-2f, 2f, 2f);
         }
         
@@ -157,20 +164,22 @@ public class Player : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.LeftShift) && m_dojump == false)
         {
-
-            GameObject obj = Instantiate(Playerfx.gameObject, transform.position, Quaternion.identity, m_trsobj).GetComponent<GameObject>();
             _dashing = true;
-            //대쉬 이펙트를 불러내고 싶은데 게임 매니저 playerfx에 있는 Dashing을 가져와야함
-            if (m_playermovespeedlimit > m_playermovespeed)
+            
+            if (m_playermovespeedlimit > m_playerMoveSpeed && _dashing)
             {
+                if (m_playerMoveSpeed == m_playermovespeedBasic)
+                {
+                    gameManager.spawndashingfx();
+                }
                 //GameObject obj = Instantiate()
-                m_playermovespeed += m_playermovespeed * Time.deltaTime; // 대시 스피드 점점 빨라짐
+                m_playerMoveSpeed += m_playerMoveSpeed * Time.deltaTime; // 대시 스피드 점점 빨라짐
             }
         }
-        else
+        else if(Input.GetKeyUp(KeyCode.LeftShift))
         {
             _dashing = false;
-            m_playermovespeed = 5f; // 원복
+            m_playerMoveSpeed = m_playermovespeedBasic; // 원복
         }
     }
     private void jump()
@@ -181,7 +190,7 @@ public class Player : MonoBehaviour
         {
             if (m_checkGround == true || (m_checkGround == false && m_wallgrap == true))
             {
-                m_playermovespeed = 5f;
+                m_playerMoveSpeed = m_playermovespeedBasic;
                 m_rigid.bodyType = RigidbodyType2D.Dynamic;
                 m_rigid.velocity = Vector2.up * m_jumppower;
                 m_jump = true;
@@ -311,7 +320,7 @@ public class Player : MonoBehaviour
         m_Animator.SetBool("WallCheck", m_checkWall);
         m_Animator.SetBool("Ground", m_checkGround);
         m_Animator.SetFloat("gravity", m_gravity);
-        m_Animator.SetFloat("playerMoveSpeed", m_playermovespeed);
+        m_Animator.SetFloat("playerMoveSpeed", m_playerMoveSpeed);
         m_Animator.SetFloat("playerAttackSpeed", m_attackSpeed);
     }
     private void aminNameCheck()

@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] public List<GameObject> m_playerfx;
     [SerializeField] private List<GameObject> m_playerSkillfx;
     [SerializeField] private Transform m_trsGameObj;
+    [SerializeField] private Transform m_PlayerfxObj;
     [SerializeField] private GameObject m_objPlayer;
     private void Awake()
     {
@@ -33,9 +34,11 @@ public class GameManager : MonoBehaviour
         
     }
 
-    private void spawndashingfx()
+    public void spawndashingfx()
     {
-        GameObject obj = Instantiate(m_playerfx[0], transform.position, Quaternion.identity, m_trsGameObj);
+        GameObject obj = Instantiate(m_playerfx[0], m_PlayerfxObj.position, Quaternion.identity, m_trsGameObj);
+        Destroy(obj, 0.5f);
     }
+
 
 }
