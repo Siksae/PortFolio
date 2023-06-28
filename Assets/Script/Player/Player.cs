@@ -12,13 +12,14 @@ public class Player : MonoBehaviour
     private Collider2D[] m_objplayercheckColl;
     [SerializeField] private Transform m_trsobj;
     private GameManager gameManager;
+    private HitBox hitBox;
 
     [Header("스크립트")]
     [SerializeField] private Playerfx Playerfx;
 
     [Header("플레이어 공격")] //플레이어 공격의 변수  
     private bool m_Attack; //공격키 입력변수
-    private bool m_doAttack; //공격을 하고 있는지
+    public bool m_doAttack; //공격을 하고 있는지
     private float m_doAttacktimer = 1f;
     private float m_attackSpeed = 1f;
 
@@ -86,6 +87,7 @@ public class Player : MonoBehaviour
         m_Animation = GetComponent<Animation>();
         m_trsobj = GetComponent<Transform>();
         gameManager = GameManager.Instance;
+        hitBox = GetComponent<HitBox>();
 
 
     }
@@ -103,6 +105,7 @@ public class Player : MonoBehaviour
         aminNameCheck();
 
     }
+    //===============================================================
     private void checkCamera() //Camera가 Player를 따라다닙니다.
     {
         Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, -10f);
@@ -144,7 +147,7 @@ public class Player : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.Z))
         {
-            m_Attack = true;
+            m_Attack = true;          
         }
         else if (!Input.GetKey(KeyCode.Z))
         {
@@ -157,7 +160,17 @@ public class Player : MonoBehaviour
                     m_Attack = false;
                 }
             }
-           
+        }
+    }
+    private void attackCheck() {
+
+        if(m_doAttack == true)
+        {
+            hitBox.CollOnOff(HitBox.e_hitType.Attack, true);
+        }
+        else
+        {
+            hitBox.CollOnOff(HitBox.e_hitType.Attack, false);
         }
     }
     private void dashing() // 플레이어 대쉬 함수
@@ -170,7 +183,7 @@ public class Player : MonoBehaviour
             {
                 if (m_playerMoveSpeed == m_playermovespeedBasic)
                 {
-                    gameManager.spawndashingfx();
+                    gameManager.spawnDashingStratFx();
                 }
                 //GameObject obj = Instantiate()
                 m_playerMoveSpeed += m_playerMoveSpeed * Time.deltaTime; // 대시 스피드 점점 빨라짐
@@ -223,9 +236,12 @@ public class Player : MonoBehaviour
                 switch (_hit)
                 {
                     case HitBox.e_hitType.Ground:
-                        m_checkGround = true;
-                        m_dojump = false;
-                        collOnOff(m_objplayercheckColl, HitBox.e_hitType.WallGrap, false);
+                        if (_coll.name == "Ground")
+                        {
+                            m_checkGround = true;
+                            m_rigid.velocity = Vector2.zero;
+                            m_dojump = false;
+                        }
                         break;
                     case HitBox.e_hitType.Wall:
                         m_checkWall = true;
@@ -233,13 +249,29 @@ public class Player : MonoBehaviour
                     case HitBox.e_hitType.Hit:
                         break;
                     case HitBox.e_hitType.Attack:
+                        
                         break;
                     case HitBox.e_hitType.WallGrap:
-                        m_dowallgrap = true;
+                        if (_coll.name == "Ground")
+                        {
+                            m_dowallgrap = true;
+                        }
                         break;
                 }
                 break;
             case HitBox.e_stateType.Stay:
+                switch (_hit)
+                {
+                    case HitBox.e_hitType.Ground:
+                    { 
+                        if (_coll.name == "Ground")
+                        {
+                        m_checkGround = true;
+                        m_dojump = false;
+                        }
+                    }
+                    break;
+                }
                 break;
             case HitBox.e_stateType.Exit:
                 switch (_hit)
@@ -247,7 +279,6 @@ public class Player : MonoBehaviour
                     case HitBox.e_hitType.Ground:
                         m_checkGround = false;
                         m_dojump = true;
-                        collOnOff(m_objplayercheckColl, HitBox.e_hitType.WallGrap, true);
                         break;
                     case HitBox.e_hitType.Wall:
                         m_checkWall = false;
@@ -264,16 +295,6 @@ public class Player : MonoBehaviour
         }
     }
 
-    private void collOnOff(Collider2D[] collider2Ds, HitBox.e_hitType _Name, bool _bool)
-    {
-        for (int iNum = collider2Ds.Length - 1; iNum > 0; iNum--)
-        {
-            if (collider2Ds[iNum].name == _Name.ToString())
-            {
-                collider2Ds[iNum].enabled = _bool;
-            }
-        }
-    }
     private void gripwall()
     {
         if (m_wallgrap == true && m_dowallgrap == true)

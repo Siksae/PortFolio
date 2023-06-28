@@ -6,7 +6,7 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    [SerializeField] public List<GameObject> m_playerfx;
+    [SerializeField] private List<GameObject> m_playerfx;
     [SerializeField] private List<GameObject> m_playerSkillfx;
     [SerializeField] private Transform m_trsGameObj;
     [SerializeField] private Transform m_PlayerfxObj;
@@ -28,13 +28,7 @@ public class GameManager : MonoBehaviour
         
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
-    public void spawndashingfx()
+    public void spawnDashingStratFx()
     {
         GameObject obj = Instantiate(m_playerfx[0], m_PlayerfxObj.position, Quaternion.identity, m_trsGameObj);
         Destroy(obj, 0.5f);

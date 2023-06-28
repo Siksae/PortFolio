@@ -5,6 +5,7 @@ using UnityEngine;
 public class HitBox : MonoBehaviour
 {
     private Player player;
+    [SerializeField] private Transform m_hitBox;
     [SerializeField] private e_hitType e_HitType; //히트 타입을 입력
     public enum e_hitType
     {
@@ -19,6 +20,12 @@ public class HitBox : MonoBehaviour
         player = GetComponentInParent<Player>(); //겟 컴포넌트 인 패런츠 중요!!!!! 부모의 컴포넌트를 불러옴
     }
 
+
+    public void CollOnOff(e_hitType _Name, bool _bool)
+    {
+        GameObject m_objColl = GameObject.Find(_Name.ToString());
+        m_objColl.SetActive(_bool);
+    }
     private void OnTriggerEnter2D(Collider2D collision)
     {
         player.CollCheck(e_stateType.Enter, e_HitType, collision); //onTriggerEnter시 작동 (e_StateType을 받고 지정된 HitType 변수로 지정, collision data도 넘어감
