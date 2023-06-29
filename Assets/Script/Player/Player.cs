@@ -126,17 +126,19 @@ public class Player : MonoBehaviour
             return;
         }
         m_moveDir.x = Input.GetAxisRaw("Horizontal");
-        if (m_moveDir.x != 0 && m_checkWall == true)
+        if (m_moveDir.x != 0)
         {
-            transform.position +=  Vector3.zero;
-            transform.localScale = m_moveDir.x == 1f ? new Vector3(3, 3f, 3f) : new Vector3(-3f, 3f, 3f);
+            _moving = true;
+            transform.localScale = new Vector3(m_moveDir.x * 3f, 3f, 3f);
+            if (m_checkWall == true) { transform.position = transform.position; return; }
+            
+            transform.position += m_moveDir * m_playerMoveSpeed * Time.deltaTime;       
+            
         }
-        else if (m_moveDir.x != 0)
+        else
         {
-            transform.position += m_moveDir * m_playerMoveSpeed * Time.deltaTime;
-            transform.localScale = m_moveDir.x == 1f ? new Vector3(3f, 3f, 3f) : new Vector3(-3f, 3f, 3f);
+            _moving = false;
         }
-        
     }
 
     private void Attack() // 플레이어 공격 함수
@@ -172,10 +174,10 @@ public class Player : MonoBehaviour
     }
     private void dashing() // 플레이어 대쉬 함수
     {
-        if (Input.GetKey(KeyCode.LeftShift) && m_dojump == false)
+        if (Input.GetKey(KeyCode.LeftShift) && m_dojump == false && _moving == true)
         {
             _dashing = true;
-            
+
             if (m_playermovespeedlimit > m_playerMoveSpeed && _dashing)
             {
                 if (m_playerMoveSpeed == m_playermovespeedBasic)
@@ -186,7 +188,7 @@ public class Player : MonoBehaviour
                 m_playerMoveSpeed += m_playerMoveSpeed * Time.deltaTime; // 대시 스피드 점점 빨라짐
             }
         }
-        else if(Input.GetKeyUp(KeyCode.LeftShift))
+        else if (Input.GetKeyUp(KeyCode.LeftShift) || m_moving == false)
         {
             _dashing = false;
             m_playerMoveSpeed = m_playermovespeedBasic; // 원복
@@ -195,7 +197,7 @@ public class Player : MonoBehaviour
     private void jump()
     {
         m_gravity = m_rigid.velocity.y;
-        if (Input.GetKeyDown(KeyCode.UpArrow))
+        if (Input.GetKeyDown(KeyCode.C))
         {
             if (m_checkGround == true || (m_checkGround == false && m_wallgrap == true))
             {
@@ -352,7 +354,7 @@ public class Player : MonoBehaviour
     }
     private void checkAnim()
     {
-        m_Animator.SetBool("move", m_moveDir.x != 0);
+        m_Animator.SetBool("move", m_moving);
         m_Animator.SetBool("doattack", m_doAttack);
         m_Animator.SetBool("dodash", m_dashing);
         m_Animator.SetBool("Attack", m_Attack);
