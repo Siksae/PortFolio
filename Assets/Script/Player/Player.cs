@@ -9,10 +9,9 @@ public class Player : MonoBehaviour
     private BoxCollider2D m_playerCollBox2D;
     private Animator m_Animator;
     private Animation m_Animation;
-    private Collider2D[] m_objplayercheckColl;
     [SerializeField] private Transform m_trsobj;
     private GameManager gameManager;
-    private HitBox hitBox;
+    private Collider2D[] m_Coll2D;
 
     [Header("스크립트")]
     [SerializeField] private Playerfx Playerfx;
@@ -82,13 +81,11 @@ public class Player : MonoBehaviour
         m_playerMoveSpeed = m_playermovespeedBasic;
         m_rigid = GetComponent<Rigidbody2D>();
         m_playerCollBox2D = GetComponent<BoxCollider2D>();
-        m_objplayercheckColl = GetComponentsInChildren<Collider2D>();
         m_Animator = GetComponent<Animator>();
         m_Animation = GetComponent<Animation>();
         m_trsobj = GetComponent<Transform>();
         gameManager = GameManager.Instance;
-        hitBox = GetComponent<HitBox>();
-
+        m_Coll2D = GetComponentsInChildren<Collider2D>();
 
     }
     void Update()
@@ -132,13 +129,12 @@ public class Player : MonoBehaviour
         if (m_moveDir.x != 0 && m_checkWall == true)
         {
             transform.position +=  Vector3.zero;
-            m_rigid.velocity = m_rigid.velocity;
-            transform.localScale = m_moveDir.x == 1f ? new Vector3(2, 2f, 2f) : new Vector3(-2f, 2f, 2f);
+            transform.localScale = m_moveDir.x == 1f ? new Vector3(3, 3f, 3f) : new Vector3(-3f, 3f, 3f);
         }
         else if (m_moveDir.x != 0)
         {
             transform.position += m_moveDir * m_playerMoveSpeed * Time.deltaTime;
-            transform.localScale = m_moveDir.x == 1f ? new Vector3(2, 2f, 2f) : new Vector3(-2f, 2f, 2f);
+            transform.localScale = m_moveDir.x == 1f ? new Vector3(3f, 3f, 3f) : new Vector3(-3f, 3f, 3f);
         }
         
     }
@@ -147,7 +143,8 @@ public class Player : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.Z))
         {
-            m_Attack = true;          
+            m_Attack = true;
+            CollOnOff(HitBox.e_hitType.Attack, true);
         }
         else if (!Input.GetKey(KeyCode.Z))
         {
@@ -160,18 +157,18 @@ public class Player : MonoBehaviour
                     m_Attack = false;
                 }
             }
+            checkAttack();
+
         }
     }
-    private void attackCheck() {
 
-        if(m_doAttack == true)
+    private void checkAttack()
+    {
+        if (m_doAttack == false)
         {
-            hitBox.CollOnOff(HitBox.e_hitType.Attack, true);
+            CollOnOff(HitBox.e_hitType.Attack, false);
         }
-        else
-        {
-            hitBox.CollOnOff(HitBox.e_hitType.Attack, false);
-        }
+        
     }
     private void dashing() // 플레이어 대쉬 함수
     {
@@ -198,7 +195,6 @@ public class Player : MonoBehaviour
     private void jump()
     {
         m_gravity = m_rigid.velocity.y;
-        ;
         if (Input.GetKeyDown(KeyCode.UpArrow))
         {
             if (m_checkGround == true || (m_checkGround == false && m_wallgrap == true))
@@ -230,65 +226,81 @@ public class Player : MonoBehaviour
     }
     public void CollCheck(HitBox.e_stateType _state, HitBox.e_hitType _hit, Collider2D _coll) //콜라이더 우선
     {
-        switch (_state)
+        switch (_hit)
         {
-            case HitBox.e_stateType.Enter :
-                switch (_hit)
+            case HitBox.e_hitType.Ground:
+                switch (_state)
                 {
-                    case HitBox.e_hitType.Ground:
+                    case HitBox.e_stateType.Enter:
                         if (_coll.name == "Ground")
                         {
                             m_checkGround = true;
                             m_rigid.velocity = Vector2.zero;
                             m_dojump = false;
                         }
+                        else if (_coll.tag.Equals("Enemy"))
+                        {
+                            m_rigid.velocity = Vector2.up * m_jumppower;
+                        }
+                        CollOnOff(HitBox.e_hitType.WallGrap, false);
                         break;
-                    case HitBox.e_hitType.Wall:
+                    case HitBox.e_stateType.Stay:
+                        break;
+                    case HitBox.e_stateType.Exit:
+                        m_checkGround = false;
+                        m_dojump = true;
+                        CollOnOff(HitBox.e_hitType.WallGrap, true);
+                        break;
+                }
+                break;
+            case HitBox.e_hitType.Wall:
+                switch (_state)
+                {
+                    case HitBox.e_stateType.Enter:
                         m_checkWall = true;
                         break;
-                    case HitBox.e_hitType.Hit:
+                    case HitBox.e_stateType.Stay:
                         break;
-                    case HitBox.e_hitType.Attack:
-                        
+                    case HitBox.e_stateType.Exit:
+                        m_checkWall = false;
                         break;
-                    case HitBox.e_hitType.WallGrap:
+                }
+                break;
+            case HitBox.e_hitType.Hit:
+                switch (_state)
+                {
+                    case HitBox.e_stateType.Enter:
+                        break;
+                    case HitBox.e_stateType.Stay:
+                        break;
+                    case HitBox.e_stateType.Exit:
+                        break;
+                }
+                break;
+            case HitBox.e_hitType.Attack:
+                switch (_state)
+                {
+                    case HitBox.e_stateType.Enter:
+                        break;
+                    case HitBox.e_stateType.Stay:
+                        break;
+                    case HitBox.e_stateType.Exit:
+                        break;
+                }
+                break;
+            case HitBox.e_hitType.WallGrap:
+                switch (_state)
+                {
+                    case HitBox.e_stateType.Enter:
                         if (_coll.name == "Ground")
                         {
                             m_dowallgrap = true;
                         }
                         break;
-                }
-                break;
-            case HitBox.e_stateType.Stay:
-                switch (_hit)
-                {
-                    case HitBox.e_hitType.Ground:
-                    { 
-                        if (_coll.name == "Ground")
-                        {
-                        m_checkGround = true;
-                        m_dojump = false;
-                        }
-                    }
-                    break;
-                }
-                break;
-            case HitBox.e_stateType.Exit:
-                switch (_hit)
-                {
-                    case HitBox.e_hitType.Ground:
-                        m_checkGround = false;
-                        m_dojump = true;
+                    case HitBox.e_stateType.Stay:
                         break;
-                    case HitBox.e_hitType.Wall:
-                        m_checkWall = false;
-                        break;
-                    case HitBox.e_hitType.Hit:
-                        break;
-                    case HitBox.e_hitType.Attack:
-                        break;
-                    case HitBox.e_hitType.WallGrap:
-                            m_dowallgrap = false;
+                    case HitBox.e_stateType.Exit:
+                        m_dowallgrap = false;
                         break;
                 }
                 break;
@@ -326,7 +338,18 @@ public class Player : MonoBehaviour
         }
         Invin();
     }
-
+    public void CollOnOff(HitBox.e_hitType _Name, bool _bool)
+    {
+        int count = m_Coll2D.Length;
+        for (int iNum = count - 1; iNum > 0; iNum--)
+        {
+            if (m_Coll2D[iNum].ToString().Contains(_Name.ToString()) == true)
+            {
+                m_Coll2D[iNum].enabled = _bool;
+                break;
+            }
+        }
+    }
     private void checkAnim()
     {
         m_Animator.SetBool("move", m_moveDir.x != 0);
