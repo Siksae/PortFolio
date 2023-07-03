@@ -22,6 +22,7 @@ public class Player : MonoBehaviour
     private float m_doAttacktimer = 1f;
     private float m_attackSpeed = 1f;
 
+
     [Header("플레이어 이동")] //플레이어 이동 변수
     private bool _moving;
     private bool m_moving
@@ -42,11 +43,14 @@ public class Player : MonoBehaviour
             _dashing = value;
         }
     }
-    
     [SerializeField] private float m_playermovespeedBasic = 5f;  //초기 대쉬 속도
     private float m_playerMoveSpeed;
     private float m_playermovespeedlimit = 10f; //대시 속도 리밋
     private float m_playerMoveSpeedLowLimit = 2f; //대시 속도 리밋
+    [SerializeField] private Vector3 m_moveDir;
+    private Vector3 m_checkDir;
+    private bool m_isRight;
+
     [Header("플레이어 점프")] //플레이어 점프의 변수 : 벽 인식, 땅 인식, 점프 스피드 (gravity)
     private bool m_jump; //jump
     private bool m_dojump;
@@ -73,9 +77,7 @@ public class Player : MonoBehaviour
     private float m_PlayerMP;
     private float m_PlayerSP;
     
-    [SerializeField] private Vector3 m_moveDir;
-    private Vector3 m_checkDir;
-    private bool m_isRight;
+
     void Start()
     {
         m_playerMoveSpeed = m_playermovespeedBasic;
