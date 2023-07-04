@@ -1,13 +1,30 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.EventSystems;
 public class SkillManager : MonoBehaviour
 {
-    [SerializeField] private GameObject m_SkillWindow;
+    [SerializeField] public GameObject m_SkillWindow;
 
+    [Header("스킬 이미지")]
+    [SerializeField] private Sprite Unknown;
+    [SerializeField] private List<Sprite> AttackSkill;
+    [SerializeField] private List<Sprite> BuffSkill;
 
-    
+    static public SkillManager Instance;
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(this);
+        }
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -33,6 +50,15 @@ public class SkillManager : MonoBehaviour
                 m_SkillWindow.SetActive(true);
             }
         }
+    }
+
+    private void initSkill()
+    {
+        m_SkillWindow.GetComponent<Image>().sprite = Unknown;
+    }
+    public void SkillWindowOutDetail(Sprite _img, GameObject now_obj, GameObject chan_obj)
+    {
+        now_obj.GetComponent<Image>().sprite = _img;
     }
 }
            
