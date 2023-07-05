@@ -7,8 +7,6 @@ using UnityEngine.EventSystems;
 
 public class CheckImage : MonoBehaviour , IPointerEnterHandler , IPointerClickHandler, IPointerExitHandler
 {
-
-    [SerializeField] private GameObject m_checkImage;
     private Image m_imgSkill;
     private GameObject m_obj;
     private SkillManager m_skillManager;
@@ -33,9 +31,8 @@ public class CheckImage : MonoBehaviour , IPointerEnterHandler , IPointerClickHa
         m_obj = eventData.pointerEnter;
         m_sprSkill = m_obj.GetComponent<Image>().sprite;
         if (m_obj.ToString().Contains("CheckSkill"))
-        {
-            
-            m_skillManager.SkillWindowOutDetail(m_sprSkill, m_checkImage,m_obj);
+        {       
+            m_skillManager.SkillWindowOutDetail(m_sprSkill);
         }
     }
     void IPointerClickHandler.OnPointerClick(PointerEventData eventData)
@@ -54,13 +51,13 @@ public class CheckImage : MonoBehaviour , IPointerEnterHandler , IPointerClickHa
         }
         else if(m_obj.ToString().Contains("Exit"))
         {
-
+            m_skillManager.m_SkillWindow.SetActive(false);
         }
         
     }
 
     void IPointerExitHandler.OnPointerExit(PointerEventData eventData)
     {
-        m_imgSkill.color = Color.white;
+        m_imgSkill.color = Color.white; 
     }
 }

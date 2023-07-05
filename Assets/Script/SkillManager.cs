@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-public class SkillManager : MonoBehaviour
+public class SkillManager : MonoBehaviour, IDragHandler, IPointerClickHandler
 {
     [SerializeField] public GameObject m_SkillWindow;
 
@@ -52,13 +52,37 @@ public class SkillManager : MonoBehaviour
         }
     }
 
-    private void initSkill()
+    public void initSkill(GameObject _obj)
     {
-        m_SkillWindow.GetComponent<Image>().sprite = Unknown;
+        _obj.GetComponent<Image>().sprite = Unknown;
     }
-    public void SkillWindowOutDetail(Sprite _img, GameObject now_obj, GameObject chan_obj)
+    public void SkillWindowOutDetail(Sprite _img)
     {
-        now_obj.GetComponent<Image>().sprite = _img;
+        GameObject[] img = m_SkillWindow.GetComponentsInChildren<GameObject>();
+        for(int iNum = 0; iNum < img.Length; iNum++)
+        {
+            if (img[iNum].ToString().Contains("SkillImage"))
+            {
+                img[iNum].GetComponent<Image>().sprite = _img;
+                break;
+            }
+        }
+    }
+    private void MoveWindow(Vector3 _pos)
+    {
+        m_SkillWindow.transform.position = _pos;
+    }
+
+    void IPointerClickHandler.OnPointerClick(PointerEventData eventData)
+    {
+        Vector3 pos = eventData.pressPosition;
+        MoveWindow(pos);
+    }
+
+    void IDragHandler.OnDrag(PointerEventData eventData)
+    {
+        Vector3 pos = eventData.position;
+        
     }
 }
            
